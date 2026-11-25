@@ -217,7 +217,9 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
           setValidation(result);
           setIsValid(true);
         }
-      } catch {}
+      } catch {
+        // Validation is best-effort: on failure keep the last result, don't block the UI
+      }
     };
 
     validate();
@@ -252,6 +254,7 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
     if (onConfigurationChange) {
       onConfigurationChange(currentConfig);
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- pre-existing; dirty tracking to be reworked with CFG-157
     setIsDirty(true);
   }, [selections, selectedAddOns, quantity]);
 
@@ -265,6 +268,7 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
     if (showShareModal) {
       const encoded = encodeConfigurationToUrl(currentConfig);
       const url = `${window.location.origin}${window.location.pathname}?config=${encoded}`;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- pre-existing; shareUrl could be derived instead of stored
       setShareUrl(url);
     }
   }, [showShareModal, currentConfig]);
@@ -276,9 +280,11 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
     if (encodedConfig) {
       const decoded = decodeConfigurationFromUrl(encodedConfig);
       if (decoded) {
+        /* eslint-disable react-hooks/set-state-in-effect -- pre-existing: hydrating state from share link on mount */
         if (decoded.selections) setSelections(decoded.selections);
         if (decoded.addOns) setSelectedAddOns(decoded.addOns);
         if (decoded.quantity) setQuantity(decoded.quantity);
+        /* eslint-enable react-hooks/set-state-in-effect */
       }
     }
   }, []);
@@ -289,12 +295,22 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
 
   const handleOptionChange = useCallback(
     (optionId: string, value: string | number | boolean) => {
+      const option = product.options.find((o) => o.id === optionId);
+
+      if (option?.type === 'toggle') {
+        const blockingAddOn = product.addOns.find(
+          (a) => a.dependsOn?.optionId === optionId && selectedAddOns.includes(a.id),
+        );
+        if (blockingAddOn) {
+          setError(ERROR_CODES.DEPENDENCY_MISSING);
+          return;
+        }
+      }
       setSelections((prev) => ({
         ...prev,
         [optionId]: value,
       }));
 
-      const option = product.options.find((o) => o.id === optionId);
       // Clean up any dependent add-ons whose requirement is no longer met.
       // Toggles are handled in handleAddOnToggle, so we only need to do this for select options.
       if (option && option.type === 'select') {
@@ -548,24 +564,39 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
 
   const renderToggleOption = (option: ProductOption) => {
     const currentValue = selections[option.id] as boolean;
+    const blockingAddOns = product.addOns.filter((addOn) => {
+      const dependsOnThisToggle = addOn.dependsOn?.optionId === option.id;
+      const isSelected = selectedAddOns.includes(addOn.id);
+      return dependsOnThisToggle && isSelected;
+    });
+
+    const isToggleOn = currentValue;
+    const hasBlockingAddOns = blockingAddOns.length > 0;
+    const isLocked = isToggleOn && hasBlockingAddOns;
 
     return (
       <div className="option-group" key={option.id}>
         <div className="toggle-control">
           <div
-            className={`toggle-switch ${currentValue ? 'active' : ''}`}
-            onClick={() => !readOnly && handleOptionChange(option.id, !currentValue)}
+            className={`toggle-switch ${currentValue ? 'active' : ''} ${isLocked ? 'disabled' : ''}`}
             role="switch"
             aria-checked={currentValue}
+            aria-disabled={readOnly || isLocked}
             tabIndex={0}
+            onClick={() => !readOnly && handleOptionChange(option.id, !currentValue)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                handleOptionChange(option.id, !currentValue);
+                if (!readOnly) handleOptionChange(option.id, !currentValue); // was missing the readOnly check
               }
             }}
           />
           <span className="toggle-label">{option.name}</span>
+          {isLocked && (
+            <span className="toggle-hint">
+              Cannot be removed while {blockingAddOns.map((a) => a.name).join(', ')} is added
+            </span>
+          )}
         </div>
       </div>
     );

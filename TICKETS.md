@@ -73,7 +73,7 @@ Marcus mentioned on Slack that this definitely worked on prod about a month ago 
 
 ---
 
-## 🔴 CFG-148: Crash when deselecting "Include Packaging"
+## 🔴 CFG-148: Crash when deselecting "Include Packaging" - Resolved
 
 **Reporter:** QA (Alex)
 **Created:** 1 day ago
