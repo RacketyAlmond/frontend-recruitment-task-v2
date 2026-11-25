@@ -90,6 +90,17 @@ const isAddOnAvailable = (
   return dependencyValue === addOn.dependsOn.requiredValue;
 };
 
+type ConfigSnapshotSource = Pick<Configuration, 'selections' | 'addOns' | 'quantity'>;
+
+const toSnapshot = ({ selections, addOns, quantity }: ConfigSnapshotSource): string =>
+  JSON.stringify({
+    selections: Object.keys(selections)
+      .sort()
+      .map((key) => [key, selections[key]]),
+    addOns: [...addOns].sort(),
+    quantity,
+  });
+
 const formatTimestamp = (isoString: string): string => {
   const date = new Date(isoString);
   return date.toLocaleString();
@@ -131,7 +142,9 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
 
   const [configId] = useState<string>(() => initialConfiguration?.id || generateConfigId());
 
-  const [isDirty, setIsDirty] = useState(false);
+  const [cleanSnapshot, setCleanSnapshot] = useState(() =>
+    toSnapshot({ selections, addOns: selectedAddOns, quantity }),
+  );
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [draftName, setDraftName] = useState('');
 
@@ -169,6 +182,8 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
     }),
     [configId, product.id, selections, selectedAddOns, quantity, draftName],
   );
+
+  const isDirty = toSnapshot(currentConfig) !== cleanSnapshot;
 
   const {
     price,
@@ -254,8 +269,6 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
     if (onConfigurationChange) {
       onConfigurationChange(currentConfig);
     }
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- pre-existing; dirty tracking to be reworked with CFG-157
-    setIsDirty(true);
   }, [selections, selectedAddOns, quantity]);
 
   useEffect(() => {
@@ -281,9 +294,19 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
       const decoded = decodeConfigurationFromUrl(encodedConfig);
       if (decoded) {
         /* eslint-disable react-hooks/set-state-in-effect -- pre-existing: hydrating state from share link on mount */
-        if (decoded.selections) setSelections(decoded.selections);
-        if (decoded.addOns) setSelectedAddOns(decoded.addOns);
-        if (decoded.quantity) setQuantity(decoded.quantity);
+        const sharedSelections = decoded.selections ?? {};
+        const sharedAddOns = decoded.addOns ?? [];
+        const sharedQuantity = decoded.quantity ?? 1;
+        setSelections(sharedSelections);
+        setSelectedAddOns(sharedAddOns);
+        setQuantity(sharedQuantity);
+        setCleanSnapshot(
+          toSnapshot({
+            selections: sharedSelections,
+            addOns: sharedAddOns,
+            quantity: sharedQuantity,
+          }),
+        );
         /* eslint-enable react-hooks/set-state-in-effect */
       }
     }
@@ -367,7 +390,7 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
     try {
       await saveDraft(currentConfig, draftName || 'Untitled Draft');
       setLastSaved(new Date());
-      setIsDirty(false);
+      setCleanSnapshot(toSnapshot(currentConfig));
       setDraftName('');
 
       setShowDraftModal(false);
@@ -384,7 +407,7 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
         setSelectedAddOns(draft.configuration.addOns);
         setQuantity(draft.configuration.quantity);
         setShowDraftModal(false);
-        setIsDirty(false);
+        setCleanSnapshot(toSnapshot(draft.configuration));
       }
     } catch {
       setError(ERROR_CODES.UNKNOWN);
@@ -448,10 +471,11 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
   );
 
   const handleDiscardChanges = useCallback(() => {
-    setSelections(getDefaultSelections(product));
+    const defaultSelections = getDefaultSelections(product);
+    setSelections(defaultSelections);
     setSelectedAddOns([]);
     setQuantity(1);
-    setIsDirty(false);
+    setCleanSnapshot(toSnapshot({ selections: defaultSelections, addOns: [], quantity: 1 }));
   }, [product]);
 
   // -------------------------------------------------------------------------

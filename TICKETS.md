@@ -43,7 +43,7 @@ This is blocking for the TechStyle demo. They configure high-volume orders — a
 
 ---
 
-## 🔴 CFG-147: Share link broken for some configurations
+## 🔴 CFG-147: Share link broken for some configurations - RESOLVED
 
 ## Appears if user didn't click "save" on his Polish lettered draft before sharing
 
@@ -73,7 +73,7 @@ Marcus mentioned on Slack that this definitely worked on prod about a month ago 
 
 ---
 
-## 🔴 CFG-148: Crash when deselecting "Include Packaging" - Resolved
+## 🔴 CFG-148: Crash when deselecting "Include Packaging" - RESOLVED
 
 **Reporter:** QA (Alex)
 **Created:** 1 day ago
