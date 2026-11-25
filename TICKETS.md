@@ -16,7 +16,7 @@ These tickets were pulled from our Jira board. They're in rough priority order b
 
 ---
 
-## 🔴 CFG-142: Price never updates — stuck at $0.00
+## 🔴 CFG-142: Price never updates — stuck at $0.00 - RESOLVED
 
 **Reporter:** Customer Success (Jamie)
 **Created:** 3 days ago
@@ -44,6 +44,10 @@ This is blocking for the TechStyle demo. They configure high-volume orders — a
 ---
 
 ## 🔴 CFG-147: Share link broken for some configurations
+
+## Appears if user didn't click "save" on his Polish lettered draft before sharing
+
+## https://stackoverflow.com/questions/66452660/encoding-and-decoding-for-chars-are-not-treated-the-same-for-polish-letters
 
 **Reporter:** Customer Success (Jamie)
 **Created:** 6 days ago

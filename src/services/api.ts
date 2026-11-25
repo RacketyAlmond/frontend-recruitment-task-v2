@@ -213,14 +213,15 @@ function formatCurrency(amount: number, currency: string): string {
  * Encode configuration to URL-safe string
  */
 export function encodeConfigurationToUrl(config: Configuration): string {
-  const data = JSON.stringify({
+  const json = JSON.stringify({
     s: config.selections,
     a: config.addOns,
     q: config.quantity,
     n: config.name,
   });
-
-  return btoa(data);
+  const bytes = new TextEncoder().encode(json);
+  const binary = Array.from(bytes, (b) => String.fromCharCode(b)).join('');
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 /**
@@ -228,7 +229,9 @@ export function encodeConfigurationToUrl(config: Configuration): string {
  */
 export function decodeConfigurationFromUrl(encoded: string): Partial<Configuration> | null {
   try {
-    const data = JSON.parse(atob(encoded));
+    const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+    const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+    const data = JSON.parse(new TextDecoder().decode(bytes));
     return {
       selections: data.s || {},
       addOns: data.a || [],
