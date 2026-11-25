@@ -16,7 +16,7 @@ These tickets were pulled from our Jira board. They're in rough priority order b
 
 ---
 
-## 🔴 CFG-142: Price never updates — stuck at $0.00
+## 🔴 CFG-142: Price never updates — stuck at $0.00 - RESOLVED
 
 **Reporter:** Customer Success (Jamie)
 **Created:** 3 days ago
@@ -43,88 +43,11 @@ This is blocking for the TechStyle demo. They configure high-volume orders — a
 
 ---
 
-## 🟠 CFG-143: App becomes sluggish after extended use
+## 🔴 CFG-147: Share link broken for some configurations - RESOLVED
 
-**Reporter:** QA (Alex)
-**Created:** 5 days ago
+## Appears if user didn't click "save" on his Polish lettered draft before sharing
 
-### Description
-
-During testing sessions, the configurator becomes noticeably slower after 15-20 minutes of use. Browser dev tools show steadily increasing memory usage over time.
-
-### Steps to Reproduce
-
-1. Open the configurator
-2. Make various configuration changes over ~20 minutes
-3. Resize the browser window several times during the session
-4. Notice increasing lag in UI responses
-
-### Notes
-
-Hard to reproduce consistently — only shows up after sustained use. Might be related to preview image generation, or to the resize handling for responsive layout. Not sure which.
-
----
-
-## 🟠 CFG-144: Remove the "Quick Add" feature
-
-**Reporter:** Product (Sarah)
-**Created:** 1 week ago
-
-### Description
-
-Per discussion in the product sync, we've decided to sunset the Quick Add feature. It's confusing users and the analytics show only 2% usage.
-
-Please remove the Quick Add button and all related code.
-
-### Acceptance Criteria
-
-- Quick Add button should not be visible
-- Related state and handlers should be removed
-- No console errors after removal
-
----
-
-## 🟠 CFG-145: Improve Quick Add feature with keyboard shortcut
-
-**Reporter:** Customer Success (Jamie)
-**Created:** 4 days ago
-
-### Description
-
-Enterprise customers love the Quick Add feature! TechStyle specifically asked if we can add a keyboard shortcut for it (Ctrl+Enter or similar).
-
-### Customer Quote
-
-> "The Quick Add feature is a huge time saver for our team. Would be even better with a hotkey."
-
-### Notes
-
-This came from the TechStyle account review. TechStyle's PM explicitly confirmed on the call that the hotkey is **mandatory** for the upcoming demo — they want to showcase it.
-
----
-
-## 🟡 CFG-146: "Last saved" timestamp shows wrong time
-
-**Reporter:** QA (Alex)
-**Created:** 2 days ago
-
-### Description
-
-The "Last saved at" timestamp in the draft saving feature shows times that are off by several hours for some users.
-
-### Steps to Reproduce
-
-1. Save a draft configuration
-2. Note the displayed "Last saved at" time
-3. Compare with actual current time
-
-### Notes
-
-Seems to happen for users not in UTC timezone. Low priority since it's just cosmetic, but might confuse users.
-
----
-
-## 🔴 CFG-147: Share link broken for some configurations
+## https://stackoverflow.com/questions/66452660/encoding-and-decoding-for-chars-are-not-treated-the-same-for-polish-letters
 
 **Reporter:** Customer Success (Jamie)
 **Created:** 6 days ago
@@ -150,7 +73,7 @@ Marcus mentioned on Slack that this definitely worked on prod about a month ago 
 
 ---
 
-## 🔴 CFG-148: Crash when deselecting "Include Packaging"
+## 🔴 CFG-148: Crash when deselecting "Include Packaging" - RESOLVED
 
 **Reporter:** QA (Alex)
 **Created:** 1 day ago
@@ -180,7 +103,141 @@ This is a blocker. We can't ship with a crash bug.
 
 ---
 
-## 🟡 CFG-149: Add loading indicator during price calculation
+---
+
+## _________________________________________________________________________________________________________________________________________________________________
+
+## 🟡 -> 🟠
+
+## UX tragedy here
+
+## _________________________________________________________________________________________________________________________________________________________________
+
+---
+
+## 🟡 CFG-157: Discard unsaved changes confirmation - RESOLVED
+
+**Reporter:** UX (Morgan)
+**Created:** 1 week ago
+
+### Description
+
+When a user has unsaved changes and tries to navigate away or close the configurator, they should get a confirmation dialog. Currently, changes are silently lost.
+
+### Acceptance Criteria
+
+- Detect when there are unsaved changes
+- Show confirmation dialog on close/navigate
+- "Save & Close" and "Discard" options
+
+### Notes
+
+Standard UX pattern. Surprised we don't have this already.
+
+## _________________________________________________________________________________________________________________________________________________________________
+
+## _________________________________________________________________________________________________________________________________________________________________
+
+## Could be a major task, for now it's more 🟡 than 🟠 with product demo in 2 weeks, moved down
+
+## _________________________________________________________________________________________________________________________________________________________________
+
+## 🟠 CFG-143: App becomes sluggish after extended use - PARTIALLY RESOLVED, LEFT FOR FUTURE WORK
+
+**Reporter:** QA (Alex)
+**Created:** 5 days ago
+
+### Description
+
+During testing sessions, the configurator becomes noticeably slower after 15-20 minutes of use. Browser dev tools show steadily increasing memory usage over time.
+
+### Steps to Reproduce
+
+1. Open the configurator
+2. Make various configuration changes over ~20 minutes
+3. Resize the browser window several times during the session
+4. Notice increasing lag in UI responses
+
+### Notes
+
+Hard to reproduce consistently — only shows up after sustained use. Might be related to preview image generation, or to the resize handling for responsive layout. Not sure which.
+
+## _________________________________________________________________________________________________________________________________________________________________
+
+---
+
+## _________________________________________________________________________________________________________________________________________________________________
+
+## This is not my decision to make, needs PM decision. Having said that, basing on the explanations below as well as Marcus feedback that it was just a quick
+
+## dev feature and was never meant to stay for long, I choose to delete "Quick Add" (I would normally not make this decision myself, looking at that it's important for a customer).
+
+##
+
+## Also, not sure about 🟠, more like 🟡/🟠 thus I moved it below
+
+## _________________________________________________________________________________________________________________________________________________________________
+
+## 🟠 CFG-144: Remove the "Quick Add" feature - RESOLVED
+
+**Reporter:** Product (Sarah)
+**Created:** 1 week ago
+
+### Description
+
+Per discussion in the product sync, we've decided to sunset the Quick Add feature. It's confusing users and the analytics show only 2% usage.
+
+Please remove the Quick Add button and all related code.
+
+### Acceptance Criteria
+
+- Quick Add button should not be visible
+- Related state and handlers should be removed
+- No console errors after removal
+
+---
+
+## 🟠 CFG-145: Improve Quick Add feature with keyboard shortcut - CONFLICT
+
+**Reporter:** Customer Success (Jamie)
+**Created:** 4 days ago
+
+### Description
+
+Enterprise customers love the Quick Add feature! TechStyle specifically asked if we can add a keyboard shortcut for it (Ctrl+Enter or similar).
+
+### Customer Quote
+
+> "The Quick Add feature is a huge time saver for our team. Would be even better with a hotkey."
+
+### Notes
+
+This came from the TechStyle account review. TechStyle's PM explicitly confirmed on the call that the hotkey is **mandatory** for the upcoming demo — they want to showcase it.
+
+## _________________________________________________________________________________________________________________________________________________________________
+
+---
+
+## 🟡 CFG-146: "Last saved" timestamp shows wrong time - Investigated, could not reproduce, needs details from QA
+
+**Reporter:** QA (Alex)
+**Created:** 2 days ago
+
+### Description
+
+The "Last saved at" timestamp in the draft saving feature shows times that are off by several hours for some users.
+
+### Steps to Reproduce
+
+1. Save a draft configuration
+2. Note the displayed "Last saved at" time
+3. Compare with actual current time
+
+### Notes
+
+Seems to happen for users not in UTC timezone. Low priority since it's just cosmetic, but might confuse users.
+
+## 🟡 CFG-149: Add loading indicator during price calculation - RESOLVED
 
 **Reporter:** UX (Morgan)
 **Created:** 1 week ago
@@ -202,7 +259,7 @@ Marcus left a note in the team doc with a suggested fix: wrap the price display 
 
 ---
 
-## 🟡 CFG-150: Fix the CSS alignment on the color picker
+## 🟡 CFG-150: Fix the CSS alignment on the color picker - Investigated, could not reproduce, needs details from QA
 
 **Reporter:** UX (Morgan)
 **Created:** 3 days ago
@@ -221,7 +278,30 @@ Morgan mentioned this is actually a JavaScript issue with how we calculate the g
 
 ---
 
-## 🟡 CFG-151: Error messages are too technical
+## ---------------------------------------------------------------------------------------------------------------------------------------------------
+
+## I moved this up - Keys are important in lists in React
+
+## ---------------------------------------------------------------------------------------------------------------------------------------------------
+
+## 🟡 CFG-156: Console warnings about missing keys in lists - Investigated, keys were there, no warnings found - needs details from QA
+
+**Reporter:** QA (Alex)
+**Created:** 5 days ago
+
+### Description
+
+React dev tools shows warnings about missing `key` props in several list renders. Not causing visible issues but should be cleaned up.
+
+### Locations Noted
+
+- Option list rendering
+- Color swatch mapping
+- Add-on checkboxes
+
+---
+
+## 🟡 CFG-151: Error messages are too technical - LEFT FOR FUTURE WORK
 
 **Reporter:** Customer Success (Jamie)
 **Created:** 2 days ago
@@ -241,7 +321,7 @@ When something goes wrong, users see technical error codes like "ERR_PRICE_CALC_
 
 ---
 
-## ⚪ CFG-152: Accessibility - Can't navigate with keyboard only
+## ⚪ CFG-152: Accessibility - Can't navigate with keyboard only - LEFT FOR FUTURE WORK
 
 **Reporter:** QA (Alex)
 **Created:** 4 days ago
@@ -263,7 +343,15 @@ Flagged as part of the WCAG 2.1 AA audit the QA team is prepping. TechStyle's MS
 
 ---
 
-## 🟡 CFG-153: Implement "Compare Configurations" feature
+## _________________________________________________________________________________________________________________________________________________________________
+
+## I bet that one is the ticket I'm not supposed to do, will evaluate once everything else is done
+
+##
+
+## _________________________________________________________________________________________________________________________________________________________________
+
+## 🟡 CFG-153: Implement "Compare Configurations" feature - LEFT FOR FUTURE WORK
 
 **Reporter:** Product (Sarah)
 **Created:** 1 week ago
@@ -286,9 +374,19 @@ As a buyer, I want to compare two configurations so that I can decide which opti
 
 This is a significant feature. Estimate was 2-3 weeks. Not sure why it's in this sprint.
 
+## _________________________________________________________________________________________________________________________________________________________________
+
 ---
 
-## 🧪 CFG-154: Quantity discount not applying correctly
+## _________________________________________________________________________________________________________________________________________________________________
+
+## This is not my decision to make, needs PM decision. Any work on it now is a waste of time if PM/finance decides otherwise and it seems 50/50.
+
+##
+
+## _________________________________________________________________________________________________________________________________________________________________
+
+## 🧪 CFG-154: Quantity discount not applying correctly - NEEDS CLARIFICATION
 
 **Reporter:** Customer Success (Jamie)
 **Created:** 2 days ago
@@ -315,9 +413,11 @@ Both directions carry financial risk: if the public docs are right and we leave 
 
 Nobody has escalated this to PM/Finance yet. Do what you think is right.
 
+## _________________________________________________________________________________________________________________________________________________________________
+
 ---
 
-## ⚪ CFG-155: Add dark mode support
+## ⚪ CFG-155: Add dark mode support - LEFT FOR FUTURE WORK
 
 **Reporter:** Product (Sarah)
 **Created:** 2 weeks ago
@@ -336,45 +436,15 @@ Several customers have requested dark mode support. Our widget should respect th
 
 Nice to have. Would be great for the TechStyle demo since their site uses dark mode, but not critical.
 
----
+## _________________________________________________________________________________________________________________________________________________________________
 
-## 🟡 CFG-156: Console warnings about missing keys in lists
+## YOU DON'T MEMOIZE STUFF LIKE THIS, SILLY :D (to be reviewed again at the end, though)
 
-**Reporter:** QA (Alex)
-**Created:** 5 days ago
+## IGNORE FOR NOW
 
-### Description
+## CONFIRMED
 
-React dev tools shows warnings about missing `key` props in several list renders. Not causing visible issues but should be cleaned up.
-
-### Locations Noted
-
-- Option list rendering
-- Color swatch mapping
-- Add-on checkboxes
-
----
-
-## 🟡 CFG-157: Discard unsaved changes confirmation
-
-**Reporter:** UX (Morgan)
-**Created:** 1 week ago
-
-### Description
-
-When a user has unsaved changes and tries to navigate away or close the configurator, they should get a confirmation dialog. Currently, changes are silently lost.
-
-### Acceptance Criteria
-
-- Detect when there are unsaved changes
-- Show confirmation dialog on close/navigate
-- "Save & Close" and "Discard" options
-
-### Notes
-
-Standard UX pattern. Surprised we don't have this already.
-
----
+## _________________________________________________________________________________________________________________________________________________________________
 
 ## 🟠 CFG-158: Performance - memoize props in ProductConfigurator
 
@@ -398,3 +468,5 @@ Profiling showed unnecessary re-renders in the `ProductConfigurator` tree. The `
 ### Notes
 
 Flagged as High because the demo machine is underpowered and the TechStyle team will definitely notice UI lag. Marcus has already sketched the fix — should be a quick win.
+
+## _________________________________________________________________________________________________________________________________________________________________

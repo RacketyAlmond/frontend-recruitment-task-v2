@@ -36,6 +36,8 @@ import {
   loadDraft,
   getAllDrafts,
   deleteDraft,
+  saveAutosaveDraft,
+  clearAutosaveDraft,
   encodeConfigurationToUrl,
   decodeConfigurationFromUrl,
   generatePreview,
@@ -90,6 +92,17 @@ const isAddOnAvailable = (
   return dependencyValue === addOn.dependsOn.requiredValue;
 };
 
+type ConfigSnapshotSource = Pick<Configuration, 'selections' | 'addOns' | 'quantity'>;
+
+const toSnapshot = ({ selections, addOns, quantity }: ConfigSnapshotSource): string =>
+  JSON.stringify({
+    selections: Object.keys(selections)
+      .sort()
+      .map((key) => [key, selections[key]]),
+    addOns: [...addOns].sort(),
+    quantity,
+  });
+
 const formatTimestamp = (isoString: string): string => {
   const date = new Date(isoString);
   return date.toLocaleString();
@@ -131,12 +144,17 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
 
   const [configId] = useState<string>(() => initialConfiguration?.id || generateConfigId());
 
-  const [isDirty, setIsDirty] = useState(false);
+  const [cleanSnapshot, setCleanSnapshot] = useState(() =>
+    toSnapshot({ selections, addOns: selectedAddOns, quantity }),
+  );
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [draftName, setDraftName] = useState('');
 
   const [showDraftModal, setShowDraftModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const [draftToDelete, setDraftToDelete] = useState<Draft | null>(null);
+  const deleteTriggerRef = useRef<HTMLElement | null>(null);
   const [drafts, setDrafts] = useState<Draft[]>([]);
 
   const [validation, setValidation] = useState<ValidationResult | null>(null);
@@ -169,6 +187,8 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
     }),
     [configId, product.id, selections, selectedAddOns, quantity, draftName],
   );
+
+  const isDirty = toSnapshot(currentConfig) !== cleanSnapshot;
 
   const {
     price,
@@ -217,7 +237,9 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
           setValidation(result);
           setIsValid(true);
         }
-      } catch {}
+      } catch {
+        // Validation is best-effort: on failure keep the last result, don't block the UI
+      }
     };
 
     validate();
@@ -252,8 +274,43 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
     if (onConfigurationChange) {
       onConfigurationChange(currentConfig);
     }
-    setIsDirty(true);
   }, [selections, selectedAddOns, quantity]);
+
+  const autosaveStateRef = useRef({ config: currentConfig, isDirty });
+  useEffect(() => {
+    autosaveStateRef.current = { config: currentConfig, isDirty };
+  }, [currentConfig, isDirty]);
+
+  useEffect(() => {
+    if (readOnly) return;
+
+    const saveIfDirty = () => {
+      const { config, isDirty } = autosaveStateRef.current;
+      if (isDirty) saveAutosaveDraft(config);
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') saveIfDirty();
+    };
+
+    window.addEventListener('pagehide', saveIfDirty);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      window.removeEventListener('pagehide', saveIfDirty);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [readOnly]);
+
+  useEffect(() => {
+    if (!isDirty || readOnly) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty, readOnly]);
 
   useEffect(() => {
     if (showDraftModal) {
@@ -265,6 +322,7 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
     if (showShareModal) {
       const encoded = encodeConfigurationToUrl(currentConfig);
       const url = `${window.location.origin}${window.location.pathname}?config=${encoded}`;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- pre-existing; shareUrl could be derived instead of stored
       setShareUrl(url);
     }
   }, [showShareModal, currentConfig]);
@@ -276,9 +334,21 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
     if (encodedConfig) {
       const decoded = decodeConfigurationFromUrl(encodedConfig);
       if (decoded) {
-        if (decoded.selections) setSelections(decoded.selections);
-        if (decoded.addOns) setSelectedAddOns(decoded.addOns);
-        if (decoded.quantity) setQuantity(decoded.quantity);
+        /* eslint-disable react-hooks/set-state-in-effect -- pre-existing: hydrating state from share link on mount */
+        const sharedSelections = decoded.selections ?? {};
+        const sharedAddOns = decoded.addOns ?? [];
+        const sharedQuantity = decoded.quantity ?? 1;
+        setSelections(sharedSelections);
+        setSelectedAddOns(sharedAddOns);
+        setQuantity(sharedQuantity);
+        setCleanSnapshot(
+          toSnapshot({
+            selections: sharedSelections,
+            addOns: sharedAddOns,
+            quantity: sharedQuantity,
+          }),
+        );
+        /* eslint-enable react-hooks/set-state-in-effect */
       }
     }
   }, []);
@@ -289,12 +359,22 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
 
   const handleOptionChange = useCallback(
     (optionId: string, value: string | number | boolean) => {
+      const option = product.options.find((o) => o.id === optionId);
+
+      if (option?.type === 'toggle') {
+        const blockingAddOn = product.addOns.find(
+          (a) => a.dependsOn?.optionId === optionId && selectedAddOns.includes(a.id),
+        );
+        if (blockingAddOn) {
+          setError(ERROR_CODES.DEPENDENCY_MISSING);
+          return;
+        }
+      }
       setSelections((prev) => ({
         ...prev,
         [optionId]: value,
       }));
 
-      const option = product.options.find((o) => o.id === optionId);
       // Clean up any dependent add-ons whose requirement is no longer met.
       // Toggles are handled in handleAddOnToggle, so we only need to do this for select options.
       if (option && option.type === 'select') {
@@ -350,8 +430,9 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
   const handleSaveDraft = useCallback(async () => {
     try {
       await saveDraft(currentConfig, draftName || 'Untitled Draft');
+      clearAutosaveDraft(currentConfig.productId);
       setLastSaved(new Date());
-      setIsDirty(false);
+      setCleanSnapshot(toSnapshot(currentConfig));
       setDraftName('');
 
       setShowDraftModal(false);
@@ -368,7 +449,7 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
         setSelectedAddOns(draft.configuration.addOns);
         setQuantity(draft.configuration.quantity);
         setShowDraftModal(false);
-        setIsDirty(false);
+        setCleanSnapshot(toSnapshot(draft.configuration));
       }
     } catch {
       setError(ERROR_CODES.UNKNOWN);
@@ -394,12 +475,6 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
       onAddToCart(currentConfig, price);
     }
   }, [validation, price, currentConfig, onAddToCart]);
-
-  const handleQuickAdd = useCallback(() => {
-    if (price && onAddToCart) {
-      onAddToCart(currentConfig, price);
-    }
-  }, [price, currentConfig, onAddToCart]);
 
   const handleCopyShareUrl = useCallback(() => {
     navigator.clipboard
@@ -432,10 +507,12 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
   );
 
   const handleDiscardChanges = useCallback(() => {
-    setSelections(getDefaultSelections(product));
+    const defaultSelections = getDefaultSelections(product);
+    setSelections(defaultSelections);
     setSelectedAddOns([]);
     setQuantity(1);
-    setIsDirty(false);
+    setCleanSnapshot(toSnapshot({ selections: defaultSelections, addOns: [], quantity: 1 }));
+    clearAutosaveDraft(product.id);
   }, [product]);
 
   // -------------------------------------------------------------------------
@@ -548,24 +625,39 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
 
   const renderToggleOption = (option: ProductOption) => {
     const currentValue = selections[option.id] as boolean;
+    const blockingAddOns = product.addOns.filter((addOn) => {
+      const dependsOnThisToggle = addOn.dependsOn?.optionId === option.id;
+      const isSelected = selectedAddOns.includes(addOn.id);
+      return dependsOnThisToggle && isSelected;
+    });
+
+    const isToggleOn = currentValue;
+    const hasBlockingAddOns = blockingAddOns.length > 0;
+    const isLocked = isToggleOn && hasBlockingAddOns;
 
     return (
       <div className="option-group" key={option.id}>
         <div className="toggle-control">
           <div
-            className={`toggle-switch ${currentValue ? 'active' : ''}`}
-            onClick={() => !readOnly && handleOptionChange(option.id, !currentValue)}
+            className={`toggle-switch ${currentValue ? 'active' : ''} ${isLocked ? 'disabled' : ''}`}
             role="switch"
             aria-checked={currentValue}
+            aria-disabled={readOnly || isLocked}
             tabIndex={0}
+            onClick={() => !readOnly && handleOptionChange(option.id, !currentValue)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                handleOptionChange(option.id, !currentValue);
+                if (!readOnly) handleOptionChange(option.id, !currentValue); // was missing the readOnly check
               }
             }}
           />
           <span className="toggle-label">{option.name}</span>
+          {isLocked && (
+            <span className="toggle-hint">
+              Cannot be removed while {blockingAddOns.map((a) => a.name).join(', ')} is added
+            </span>
+          )}
         </div>
       </div>
     );
@@ -673,7 +765,9 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
 
         <div className="price-line total">
           <span>Total</span>
-          <span>{formatPrice(price.total, product.currency)}</span>
+          <span>
+            {isPriceLoading ? 'Updating ...' : formatPrice(price.total, product.currency)}
+          </span>
         </div>
       </div>
     );
@@ -720,7 +814,10 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
                       </button>
                       <button
                         className="btn btn-danger"
-                        onClick={() => handleDeleteDraft(draft.id)}
+                        onClick={() => {
+                          deleteTriggerRef.current = document.activeElement as HTMLElement;
+                          setDraftToDelete(draft);
+                        }}
                       >
                         Delete
                       </button>
@@ -804,6 +901,111 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
     );
   };
 
+  const renderDiscardModal = () => {
+    if (!showDiscardModal) return null;
+
+    const closeDiscardModal = () => {
+      setShowDiscardModal(false);
+      lastFocusedElement.current?.focus();
+    };
+
+    return (
+      <div
+        className="modal-overlay"
+        onClick={closeDiscardModal}
+        onKeyDown={(e) => e.key === 'Escape' && closeDiscardModal()}
+      >
+        <div
+          className="modal"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="discard-modal-title"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="modal-header">
+            <h3 className="modal-title" id="discard-modal-title">
+              Discard unsaved changes?
+            </h3>
+          </div>
+          <div className="modal-body">
+            <p>Your current configuration hasn't been saved as a draft.</p>
+          </div>
+          <div className="modal-footer">
+            <button className="btn btn-secondary" onClick={closeDiscardModal} autoFocus>
+              Cancel
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                setShowDiscardModal(false);
+                setShowDraftModal(true);
+              }}
+            >
+              Save draft
+            </button>
+            <button
+              className="btn btn-danger"
+              onClick={() => {
+                handleDiscardChanges();
+                setShowDiscardModal(false);
+              }}
+            >
+              Discard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderDeleteDraftModal = () => {
+    if (!draftToDelete) return null;
+
+    const closeDeleteDraftModal = () => {
+      setDraftToDelete(null);
+      deleteTriggerRef.current?.focus();
+    };
+
+    return (
+      <div
+        className="modal-overlay"
+        onClick={closeDeleteDraftModal}
+        onKeyDown={(e) => e.key === 'Escape' && closeDeleteDraftModal()}
+      >
+        <div
+          className="modal"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="delete-draft-modal-title"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="modal-header">
+            <h3 className="modal-title" id="delete-draft-modal-title">
+              Delete &quot;{draftToDelete.name}&quot;?
+            </h3>
+          </div>
+          <div className="modal-body">
+            <p>This draft will be permanently removed.</p>
+          </div>
+          <div className="modal-footer">
+            <button className="btn btn-secondary" onClick={closeDeleteDraftModal} autoFocus>
+              Cancel
+            </button>
+            <button
+              className="btn btn-danger"
+              onClick={() => {
+                handleDeleteDraft(draftToDelete.id);
+                setDraftToDelete(null);
+              }}
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // -------------------------------------------------------------------------
   // Main Render
   // -------------------------------------------------------------------------
@@ -835,7 +1037,13 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
             Share
           </button>
           {isDirty && (
-            <button className="btn btn-danger" onClick={handleDiscardChanges}>
+            <button
+              className="btn btn-danger"
+              onClick={() => {
+                lastFocusedElement.current = document.activeElement as HTMLElement;
+                setShowDiscardModal(true);
+              }}
+            >
               Discard
             </button>
           )}
@@ -876,22 +1084,12 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
 
           <div className={`price-display ${isPriceLoading ? 'price-loading' : ''}`}>
             <div className="price-label">Total Price</div>
-            <div className="price-value">{formattedTotal}</div>
+            <div className="price-value">{isPriceLoading ? 'Updating ...' : formattedTotal}</div>
 
             {renderPriceBreakdown()}
 
             <div className="validation-indicator">
               {isValid ? '✓ Configuration validated' : '⏳ Validating…'}
-            </div>
-
-            <div className="quick-add-section">
-              <button
-                className="quick-add-btn"
-                onClick={handleQuickAdd}
-                disabled={readOnly || !validation?.valid}
-              >
-                ⚡ Quick Add to Cart
-              </button>
             </div>
           </div>
 
@@ -955,6 +1153,8 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
 
       {renderDraftModal()}
       {renderShareModal()}
+      {renderDiscardModal()}
+      {renderDeleteDraftModal()}
     </div>
   );
 };

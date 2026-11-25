@@ -120,14 +120,17 @@ export async function generatePreview(
   await randomDelay(100, 300);
 
   // In a real implementation, this would composite images based on selections
-  // For now, just return the base product image with a cache-busting param
-  const timestamp = Date.now();
+  const url = new URL(product.imageUrl);
+  url.searchParams.set('config', config.id);
 
   return {
-    imageUrl: `${product.imageUrl}?config=${config.id}&t=${timestamp}`,
-    generatedAt: timestamp,
+    imageUrl: url.toString(),
+    generatedAt: Date.now(),
   };
 }
+
+const DRAFTS_KEY = 'configureflow_drafts';
+const autosaveId = (productId: string) => `draft_autosave_${productId}`;
 
 /**
  * Save a draft configuration to localStorage
@@ -148,7 +151,7 @@ export async function saveDraft(config: Configuration, name: string): Promise<Dr
     // Add new draft (limit to 10 most recent)
     const updatedDrafts = [draft, ...existingDrafts].slice(0, 10);
 
-    localStorage.setItem('configureflow_drafts', JSON.stringify(updatedDrafts));
+    localStorage.setItem(DRAFTS_KEY, JSON.stringify(updatedDrafts));
 
     resolve(draft);
   });
@@ -183,7 +186,7 @@ export async function deleteDraft(draftId: string): Promise<boolean> {
     const filtered = drafts.filter((d) => d.id !== draftId);
 
     if (filtered.length !== drafts.length) {
-      localStorage.setItem('configureflow_drafts', JSON.stringify(filtered));
+      localStorage.setItem(DRAFTS_KEY, JSON.stringify(filtered));
       resolve(true);
     } else {
       resolve(false);
@@ -191,10 +194,30 @@ export async function deleteDraft(draftId: string): Promise<boolean> {
   });
 }
 
+export function saveAutosaveDraft(config: Configuration): void {
+  const id = autosaveId(config.productId);
+  const draft: Draft = {
+    id,
+    configuration: { ...config },
+    savedAt: new Date().toISOString(),
+    name: 'Auto-saved (unsaved changes)',
+  };
+  try {
+    const others = getDraftsFromStorage().filter((d) => d.id !== id);
+    localStorage.setItem(DRAFTS_KEY, JSON.stringify([draft, ...others].slice(0, 10)));
+  } catch {
+    return;
+  }
+}
+
+export function clearAutosaveDraft(productId: string): void {
+  void deleteDraft(autosaveId(productId));
+}
+
 // Helper: Get drafts from localStorage
 function getDraftsFromStorage(): Draft[] {
   try {
-    const stored = localStorage.getItem('configureflow_drafts');
+    const stored = localStorage.getItem(DRAFTS_KEY);
     return stored ? JSON.parse(stored) : [];
   } catch {
     return [];
@@ -213,14 +236,15 @@ function formatCurrency(amount: number, currency: string): string {
  * Encode configuration to URL-safe string
  */
 export function encodeConfigurationToUrl(config: Configuration): string {
-  const data = JSON.stringify({
+  const json = JSON.stringify({
     s: config.selections,
     a: config.addOns,
     q: config.quantity,
     n: config.name,
   });
-
-  return btoa(data);
+  const bytes = new TextEncoder().encode(json);
+  const binary = Array.from(bytes, (b) => String.fromCharCode(b)).join('');
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 /**
@@ -228,7 +252,9 @@ export function encodeConfigurationToUrl(config: Configuration): string {
  */
 export function decodeConfigurationFromUrl(encoded: string): Partial<Configuration> | null {
   try {
-    const data = JSON.parse(atob(encoded));
+    const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+    const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+    const data = JSON.parse(new TextDecoder().decode(bytes));
     return {
       selections: data.s || {},
       addOns: data.a || [],
