@@ -152,6 +152,9 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
 
   const [showDraftModal, setShowDraftModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const [draftToDelete, setDraftToDelete] = useState<Draft | null>(null);
+  const deleteTriggerRef = useRef<HTMLElement | null>(null);
   const [drafts, setDrafts] = useState<Draft[]>([]);
 
   const [validation, setValidation] = useState<ValidationResult | null>(null);
@@ -815,7 +818,10 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
                       </button>
                       <button
                         className="btn btn-danger"
-                        onClick={() => handleDeleteDraft(draft.id)}
+                        onClick={() => {
+                          deleteTriggerRef.current = document.activeElement as HTMLElement;
+                          setDraftToDelete(draft);
+                        }}
                       >
                         Delete
                       </button>
@@ -899,6 +905,111 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
     );
   };
 
+  const renderDiscardModal = () => {
+    if (!showDiscardModal) return null;
+
+    const closeDiscardModal = () => {
+      setShowDiscardModal(false);
+      lastFocusedElement.current?.focus();
+    };
+
+    return (
+      <div
+        className="modal-overlay"
+        onClick={closeDiscardModal}
+        onKeyDown={(e) => e.key === 'Escape' && closeDiscardModal()}
+      >
+        <div
+          className="modal"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="discard-modal-title"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="modal-header">
+            <h3 className="modal-title" id="discard-modal-title">
+              Discard unsaved changes?
+            </h3>
+          </div>
+          <div className="modal-body">
+            <p>Your current configuration hasn't been saved as a draft.</p>
+          </div>
+          <div className="modal-footer">
+            <button className="btn btn-secondary" onClick={closeDiscardModal} autoFocus>
+              Cancel
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                setShowDiscardModal(false);
+                setShowDraftModal(true);
+              }}
+            >
+              Save draft
+            </button>
+            <button
+              className="btn btn-danger"
+              onClick={() => {
+                handleDiscardChanges();
+                setShowDiscardModal(false);
+              }}
+            >
+              Discard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderDeleteDraftModal = () => {
+    if (!draftToDelete) return null;
+
+    const closeDeleteDraftModal = () => {
+      setDraftToDelete(null);
+      deleteTriggerRef.current?.focus();
+    };
+
+    return (
+      <div
+        className="modal-overlay"
+        onClick={closeDeleteDraftModal}
+        onKeyDown={(e) => e.key === 'Escape' && closeDeleteDraftModal()}
+      >
+        <div
+          className="modal"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="delete-draft-modal-title"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="modal-header">
+            <h3 className="modal-title" id="delete-draft-modal-title">
+              Delete &quot;{draftToDelete.name}&quot;?
+            </h3>
+          </div>
+          <div className="modal-body">
+            <p>This draft will be permanently removed.</p>
+          </div>
+          <div className="modal-footer">
+            <button className="btn btn-secondary" onClick={closeDeleteDraftModal} autoFocus>
+              Cancel
+            </button>
+            <button
+              className="btn btn-danger"
+              onClick={() => {
+                handleDeleteDraft(draftToDelete.id);
+                setDraftToDelete(null);
+              }}
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // -------------------------------------------------------------------------
   // Main Render
   // -------------------------------------------------------------------------
@@ -930,7 +1041,13 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
             Share
           </button>
           {isDirty && (
-            <button className="btn btn-danger" onClick={handleDiscardChanges}>
+            <button
+              className="btn btn-danger"
+              onClick={() => {
+                lastFocusedElement.current = document.activeElement as HTMLElement;
+                setShowDiscardModal(true);
+              }}
+            >
               Discard
             </button>
           )}
@@ -1050,6 +1167,8 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
 
       {renderDraftModal()}
       {renderShareModal()}
+      {renderDiscardModal()}
+      {renderDeleteDraftModal()}
     </div>
   );
 };
