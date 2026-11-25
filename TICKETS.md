@@ -386,7 +386,7 @@ This is a significant feature. Estimate was 2-3 weeks. Not sure why it's in this
 
 ## _________________________________________________________________________________________________________________________________________________________________
 
-## 🧪 CFG-154: Quantity discount not applying correctly - LEFT FOR FUTURE WORK
+## 🧪 CFG-154: Quantity discount not applying correctly - NEEDS CLARIFICATION
 
 **Reporter:** Customer Success (Jamie)
 **Created:** 2 days ago
