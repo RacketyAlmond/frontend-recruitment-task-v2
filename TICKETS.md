@@ -142,7 +142,7 @@ Standard UX pattern. Surprised we don't have this already.
 
 ## _________________________________________________________________________________________________________________________________________________________________
 
-## 🟠 CFG-143: App becomes sluggish after extended use -
+## 🟠 CFG-143: App becomes sluggish after extended use - PARTIALLY RESOLVED
 
 **Reporter:** QA (Alex)
 **Created:** 5 days ago

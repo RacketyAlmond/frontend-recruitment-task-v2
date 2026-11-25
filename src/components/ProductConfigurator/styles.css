@@ -427,29 +427,6 @@
   margin-top: 16px;
 }
 
-/* Quick Add Button */
-.quick-add-section {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.quick-add-btn {
-  width: 100%;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px dashed rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
-  color: white;
-  font-size: 13px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.quick-add-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
 /* Draft Management */
 .draft-section {
   margin-top: 24px;

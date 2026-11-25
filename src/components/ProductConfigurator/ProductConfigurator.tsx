@@ -476,12 +476,6 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
     }
   }, [validation, price, currentConfig, onAddToCart]);
 
-  const handleQuickAdd = useCallback(() => {
-    if (price && onAddToCart) {
-      onAddToCart(currentConfig, price);
-    }
-  }, [price, currentConfig, onAddToCart]);
-
   const handleCopyShareUrl = useCallback(() => {
     navigator.clipboard
       .writeText(shareUrl)
@@ -1094,16 +1088,6 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
 
             <div className="validation-indicator">
               {isValid ? '✓ Configuration validated' : '⏳ Validating…'}
-            </div>
-
-            <div className="quick-add-section">
-              <button
-                className="quick-add-btn"
-                onClick={handleQuickAdd}
-                disabled={readOnly || !validation?.valid}
-              >
-                ⚡ Quick Add to Cart
-              </button>
             </div>
           </div>
 
