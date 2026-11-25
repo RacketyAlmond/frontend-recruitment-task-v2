@@ -129,6 +129,9 @@ export async function generatePreview(
   };
 }
 
+const DRAFTS_KEY = 'configureflow_drafts';
+const autosaveId = (productId: string) => `draft_autosave_${productId}`;
+
 /**
  * Save a draft configuration to localStorage
  */
@@ -148,7 +151,7 @@ export async function saveDraft(config: Configuration, name: string): Promise<Dr
     // Add new draft (limit to 10 most recent)
     const updatedDrafts = [draft, ...existingDrafts].slice(0, 10);
 
-    localStorage.setItem('configureflow_drafts', JSON.stringify(updatedDrafts));
+    localStorage.setItem(DRAFTS_KEY, JSON.stringify(updatedDrafts));
 
     resolve(draft);
   });
@@ -183,7 +186,7 @@ export async function deleteDraft(draftId: string): Promise<boolean> {
     const filtered = drafts.filter((d) => d.id !== draftId);
 
     if (filtered.length !== drafts.length) {
-      localStorage.setItem('configureflow_drafts', JSON.stringify(filtered));
+      localStorage.setItem(DRAFTS_KEY, JSON.stringify(filtered));
       resolve(true);
     } else {
       resolve(false);
@@ -191,10 +194,30 @@ export async function deleteDraft(draftId: string): Promise<boolean> {
   });
 }
 
+export function saveAutosaveDraft(config: Configuration): void {
+  const id = autosaveId(config.productId);
+  const draft: Draft = {
+    id,
+    configuration: { ...config },
+    savedAt: new Date().toISOString(),
+    name: 'Auto-saved (unsaved changes)',
+  };
+  try {
+    const others = getDraftsFromStorage().filter((d) => d.id !== id);
+    localStorage.setItem(DRAFTS_KEY, JSON.stringify([draft, ...others].slice(0, 10)));
+  } catch {
+    return;
+  }
+}
+
+export function clearAutosaveDraft(productId: string): void {
+  void deleteDraft(autosaveId(productId));
+}
+
 // Helper: Get drafts from localStorage
 function getDraftsFromStorage(): Draft[] {
   try {
-    const stored = localStorage.getItem('configureflow_drafts');
+    const stored = localStorage.getItem(DRAFTS_KEY);
     return stored ? JSON.parse(stored) : [];
   } catch {
     return [];

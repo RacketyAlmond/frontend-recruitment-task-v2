@@ -36,6 +36,8 @@ import {
   loadDraft,
   getAllDrafts,
   deleteDraft,
+  saveAutosaveDraft,
+  clearAutosaveDraft,
   encodeConfigurationToUrl,
   decodeConfigurationFromUrl,
   generatePreview,
@@ -271,6 +273,42 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
     }
   }, [selections, selectedAddOns, quantity]);
 
+  const autosaveStateRef = useRef({ config: currentConfig, isDirty });
+  useEffect(() => {
+    autosaveStateRef.current = { config: currentConfig, isDirty };
+  }, [currentConfig, isDirty]);
+
+  useEffect(() => {
+    if (readOnly) return;
+
+    const saveIfDirty = () => {
+      const { config, isDirty } = autosaveStateRef.current;
+      if (isDirty) saveAutosaveDraft(config);
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') saveIfDirty();
+    };
+
+    window.addEventListener('pagehide', saveIfDirty);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      window.removeEventListener('pagehide', saveIfDirty);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [readOnly]);
+
+  useEffect(() => {
+    if (!isDirty || readOnly) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty, readOnly]);
+
   useEffect(() => {
     if (showDraftModal) {
       getAllDrafts().then(setDrafts);
@@ -389,6 +427,7 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
   const handleSaveDraft = useCallback(async () => {
     try {
       await saveDraft(currentConfig, draftName || 'Untitled Draft');
+      clearAutosaveDraft(currentConfig.productId);
       setLastSaved(new Date());
       setCleanSnapshot(toSnapshot(currentConfig));
       setDraftName('');
@@ -476,6 +515,7 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
     setSelectedAddOns([]);
     setQuantity(1);
     setCleanSnapshot(toSnapshot({ selections: defaultSelections, addOns: [], quantity: 1 }));
+    clearAutosaveDraft(product.id);
   }, [product]);
 
   // -------------------------------------------------------------------------
