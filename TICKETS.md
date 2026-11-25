@@ -115,7 +115,7 @@ This is a blocker. We can't ship with a crash bug.
 
 ---
 
-## 🟡 CFG-157: Discard unsaved changes confirmation
+## 🟡 CFG-157: Discard unsaved changes confirmation - RESOLVED
 
 **Reporter:** UX (Morgan)
 **Created:** 1 week ago
@@ -142,7 +142,7 @@ Standard UX pattern. Surprised we don't have this already.
 
 ## _________________________________________________________________________________________________________________________________________________________________
 
-## 🟠 CFG-143: App becomes sluggish after extended use
+## 🟠 CFG-143: App becomes sluggish after extended use -
 
 **Reporter:** QA (Alex)
 **Created:** 5 days ago

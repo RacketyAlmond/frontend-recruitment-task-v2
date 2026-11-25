@@ -120,12 +120,12 @@ export async function generatePreview(
   await randomDelay(100, 300);
 
   // In a real implementation, this would composite images based on selections
-  // For now, just return the base product image with a cache-busting param
-  const timestamp = Date.now();
+  const url = new URL(product.imageUrl);
+  url.searchParams.set('config', config.id);
 
   return {
-    imageUrl: `${product.imageUrl}?config=${config.id}&t=${timestamp}`,
-    generatedAt: timestamp,
+    imageUrl: url.toString(),
+    generatedAt: Date.now(),
   };
 }
 
