@@ -142,7 +142,7 @@ Standard UX pattern. Surprised we don't have this already.
 
 ## _________________________________________________________________________________________________________________________________________________________________
 
-## 🟠 CFG-143: App becomes sluggish after extended use - PARTIALLY RESOLVED
+## 🟠 CFG-143: App becomes sluggish after extended use - PARTIALLY RESOLVED, LEFT FOR FUTURE WORK
 
 **Reporter:** QA (Alex)
 **Created:** 5 days ago
@@ -237,7 +237,7 @@ The "Last saved at" timestamp in the draft saving feature shows times that are o
 
 Seems to happen for users not in UTC timezone. Low priority since it's just cosmetic, but might confuse users.
 
-## 🟡 CFG-149: Add loading indicator during price calculation
+## 🟡 CFG-149: Add loading indicator during price calculation - RESOLVED
 
 **Reporter:** UX (Morgan)
 **Created:** 1 week ago
@@ -259,7 +259,7 @@ Marcus left a note in the team doc with a suggested fix: wrap the price display 
 
 ---
 
-## 🟡 CFG-150: Fix the CSS alignment on the color picker
+## 🟡 CFG-150: Fix the CSS alignment on the color picker - Investigated, could not reproduce, needs details from QA
 
 **Reporter:** UX (Morgan)
 **Created:** 3 days ago
@@ -284,7 +284,7 @@ Morgan mentioned this is actually a JavaScript issue with how we calculate the g
 
 ## ---------------------------------------------------------------------------------------------------------------------------------------------------
 
-## 🟡 CFG-156: Console warnings about missing keys in lists
+## 🟡 CFG-156: Console warnings about missing keys in lists - Investigated, keys were there, no warnings found - needs details from QA
 
 **Reporter:** QA (Alex)
 **Created:** 5 days ago
@@ -301,7 +301,7 @@ React dev tools shows warnings about missing `key` props in several list renders
 
 ---
 
-## 🟡 CFG-151: Error messages are too technical
+## 🟡 CFG-151: Error messages are too technical - LEFT FOR FUTURE WORK
 
 **Reporter:** Customer Success (Jamie)
 **Created:** 2 days ago
@@ -321,7 +321,7 @@ When something goes wrong, users see technical error codes like "ERR_PRICE_CALC_
 
 ---
 
-## ⚪ CFG-152: Accessibility - Can't navigate with keyboard only
+## ⚪ CFG-152: Accessibility - Can't navigate with keyboard only - LEFT FOR FUTURE WORK
 
 **Reporter:** QA (Alex)
 **Created:** 4 days ago
@@ -351,7 +351,7 @@ Flagged as part of the WCAG 2.1 AA audit the QA team is prepping. TechStyle's MS
 
 ## _________________________________________________________________________________________________________________________________________________________________
 
-## 🟡 CFG-153: Implement "Compare Configurations" feature
+## 🟡 CFG-153: Implement "Compare Configurations" feature - LEFT FOR FUTURE WORK
 
 **Reporter:** Product (Sarah)
 **Created:** 1 week ago
@@ -386,7 +386,7 @@ This is a significant feature. Estimate was 2-3 weeks. Not sure why it's in this
 
 ## _________________________________________________________________________________________________________________________________________________________________
 
-## 🧪 CFG-154: Quantity discount not applying correctly
+## 🧪 CFG-154: Quantity discount not applying correctly - LEFT FOR FUTURE WORK
 
 **Reporter:** Customer Success (Jamie)
 **Created:** 2 days ago
@@ -417,7 +417,7 @@ Nobody has escalated this to PM/Finance yet. Do what you think is right.
 
 ---
 
-## ⚪ CFG-155: Add dark mode support
+## ⚪ CFG-155: Add dark mode support - LEFT FOR FUTURE WORK
 
 **Reporter:** Product (Sarah)
 **Created:** 2 weeks ago
@@ -441,6 +441,8 @@ Nice to have. Would be great for the TechStyle demo since their site uses dark m
 ## YOU DON'T MEMOIZE STUFF LIKE THIS, SILLY :D (to be reviewed again at the end, though)
 
 ## IGNORE FOR NOW
+
+## CONFIRMED
 
 ## _________________________________________________________________________________________________________________________________________________________________
 
