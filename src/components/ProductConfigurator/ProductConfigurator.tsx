@@ -765,7 +765,9 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
 
         <div className="price-line total">
           <span>Total</span>
-          <span>{formatPrice(price.total, product.currency)}</span>
+          <span>
+            {isPriceLoading ? 'Updating ...' : formatPrice(price.total, product.currency)}
+          </span>
         </div>
       </div>
     );
@@ -1082,7 +1084,7 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
 
           <div className={`price-display ${isPriceLoading ? 'price-loading' : ''}`}>
             <div className="price-label">Total Price</div>
-            <div className="price-value">{formattedTotal}</div>
+            <div className="price-value">{isPriceLoading ? 'Updating ...' : formattedTotal}</div>
 
             {renderPriceBreakdown()}
 

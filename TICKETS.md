@@ -178,7 +178,7 @@ Hard to reproduce consistently — only shows up after sustained use. Might be r
 
 ## _________________________________________________________________________________________________________________________________________________________________
 
-## 🟠 CFG-144: Remove the "Quick Add" feature
+## 🟠 CFG-144: Remove the "Quick Add" feature - RESOLVED
 
 **Reporter:** Product (Sarah)
 **Created:** 1 week ago
@@ -197,7 +197,7 @@ Please remove the Quick Add button and all related code.
 
 ---
 
-## 🟠 CFG-145: Improve Quick Add feature with keyboard shortcut
+## 🟠 CFG-145: Improve Quick Add feature with keyboard shortcut - CONFLICT
 
 **Reporter:** Customer Success (Jamie)
 **Created:** 4 days ago
@@ -218,7 +218,7 @@ This came from the TechStyle account review. TechStyle's PM explicitly confirmed
 
 ---
 
-## 🟡 CFG-146: "Last saved" timestamp shows wrong time
+## 🟡 CFG-146: "Last saved" timestamp shows wrong time - Investigated, could not reproduce, needs details from QA
 
 **Reporter:** QA (Alex)
 **Created:** 2 days ago
